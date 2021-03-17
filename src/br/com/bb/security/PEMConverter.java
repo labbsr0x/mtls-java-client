@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -19,13 +20,21 @@ public class PEMConverter {
         return (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(pemCertificate.getBytes()));
     }
 
-    public static RSAPrivateKey generatePrivateKeyFromDER(String pemKey)
+    public static ECPrivateKey generateECPrivateKeyFromDER(String pemKey)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        // PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(pemKey.getBytes());
 
-        // KeyFactory factory = KeyFactory.getInstance("RSA");
+        String privateKeyPEM = pemKey.replace("-----BEGIN PRIVATE KEY-----", "").replaceAll(System.lineSeparator(), "")
+                .replace("-----END PRIVATE KEY-----", "");
 
-        // return (RSAPrivateKey) factory.generatePrivate(spec);
+        byte[] encoded = Base64.getDecoder().decode(privateKeyPEM);
+
+        KeyFactory keyFactory = KeyFactory.getInstance("EC");
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
+        return (ECPrivateKey) keyFactory.generatePrivate(keySpec);
+    }
+
+    public static RSAPrivateKey generateRSAPrivateKeyFromDER(String pemKey)
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         String privateKeyPEM = pemKey.replace("-----BEGIN PRIVATE KEY-----", "").replaceAll(System.lineSeparator(), "")
                 .replace("-----END PRIVATE KEY-----", "");

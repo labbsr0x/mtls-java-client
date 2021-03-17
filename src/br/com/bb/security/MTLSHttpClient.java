@@ -9,10 +9,10 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.net.ssl.KeyManager;
@@ -20,6 +20,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 public class MTLSHttpClient {
 
@@ -29,12 +30,17 @@ public class MTLSHttpClient {
             NoSuchAlgorithmException, CertificateException, InvalidKeySpecException, UnrecoverableKeyException {
 
         // Client Auth Certs
+        PrivateKey clientPrivateKey;
+        try {
+            clientPrivateKey = PEMConverter.generateECPrivateKeyFromDER(clientPrivateKeyPEM);
+        } catch (InvalidKeySpecException ignore) {
+            clientPrivateKey = PEMConverter.generateRSAPrivateKeyFromDER(clientPrivateKeyPEM);
+        }
         X509Certificate clientCertificate = PEMConverter.generateCertificateFromDER(clientCertificatePEM);
-        RSAPrivateKey clientPrivateKey = PEMConverter.generatePrivateKeyFromDER(clientPrivateKeyPEM);
         KeyStore keyStoreClient = KeyStore.getInstance("JKS");
         keyStoreClient.load(null, null); // won't load from a file
-        keyStoreClient.setCertificateEntry("client-cert", clientCertificate);
-        keyStoreClient.setKeyEntry("client-key", clientPrivateKey, clientePrivateKeyPassphrase.toCharArray(), null);
+        keyStoreClient.setKeyEntry("client-key", clientPrivateKey, clientePrivateKeyPassphrase.toCharArray(),
+                new X509Certificate[] { clientCertificate });
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         kmf.init(keyStoreClient, clientePrivateKeyPassphrase.toCharArray());
         KeyManager[] keyManagers = kmf.getKeyManagers();
@@ -50,14 +56,42 @@ public class MTLSHttpClient {
         trustManagerFactory.init(keyStoreServer);
 
         TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-
+        SelfCATrustManager stm = new SelfCATrustManager((X509TrustManager) trustManagers[0]);
         SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(keyManagers, trustManagers, null);
+        sslContext.init(keyManagers, new TrustManager[] { stm }, null);
 
         HttpClient httpClient = HttpClient.newBuilder().sslContext(sslContext).build();
         HttpRequest requestBuilder = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
 
         return httpClient.send(requestBuilder, HttpResponse.BodyHandlers.ofString()); // sends the request
 
+    }
+
+    private static class SelfCATrustManager implements X509TrustManager {
+
+        private final X509TrustManager tm;
+        private String runLocal;
+
+        SelfCATrustManager(X509TrustManager tm) {
+            this.tm = tm;
+            this.runLocal = System.getenv("LOCALHOST_ENABLED");
+        }
+
+        public X509Certificate[] getAcceptedIssuers() {
+            if (this.runLocal == null) {
+                return new X509Certificate[0];
+            }
+            return tm.getAcceptedIssuers();
+        }
+
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            throw new UnsupportedOperationException();
+        }
+
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            if (this.runLocal == null) {
+                tm.checkServerTrusted(chain, authType);
+            }
+        }
     }
 }

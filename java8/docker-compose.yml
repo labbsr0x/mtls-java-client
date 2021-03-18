@@ -1,7 +1,7 @@
 version: "3.7"
 
 services:
-  java11-client:
+  java8-client:
     image: local/mtls-java-cliente:java8
     build: .
     environment:

@@ -13,7 +13,7 @@ git clone https://github.com/labbsr0x/mtls-java-client.git
 docker-compose up --build
 ```
 
-This will bring 2 containers up: one with Java8 client and another with Java11.
+This will bring 2 containers up: one with Java8 client and another with Java11. Those containers has the Java code that requests the ready to test mTLS endpoint https://sidecar.mtls.labbs.com.br. The client key and client certificate are provided directly in the code as String variables, to give an example on how to do mTLS without setting any environment properties, VM params or even accessing files from disk. This is useful if you are building a solution that you will use certificates from an input parameter (like an API request).
 
 Those are pure Java8 and Java11 components, so you don't need to download any dependencies to use them.
 

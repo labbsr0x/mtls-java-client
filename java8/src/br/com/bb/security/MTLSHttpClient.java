@@ -29,7 +29,7 @@ import javax.net.ssl.X509TrustManager;
 public class MTLSHttpClient {
 
     public static String doRequest(String url, String clientCertificatePEM, String clientPrivateKeyPEM,
-            String clientePrivateKeyPassphrase, String serverCA)
+            String clientePrivateKeyPassphrase, String serverCA, boolean localhostEnabled)
             throws IOException, InterruptedException, KeyStoreException, KeyManagementException,
             NoSuchAlgorithmException, CertificateException, InvalidKeySpecException, UnrecoverableKeyException {
 
@@ -60,7 +60,7 @@ public class MTLSHttpClient {
         trustManagerFactory.init(keyStoreServer);
 
         TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-        SelfCATrustManager stm = new SelfCATrustManager((X509TrustManager) trustManagers[0]);
+        SelfCATrustManager stm = new SelfCATrustManager((X509TrustManager) trustManagers[0], localhostEnabled);
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(keyManagers, new TrustManager[] { stm }, null);
         HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
@@ -111,15 +111,15 @@ public class MTLSHttpClient {
     private static class SelfCATrustManager implements X509TrustManager {
 
         private final X509TrustManager tm;
-        private String runLocal;
+        private boolean runLocal;
 
-        SelfCATrustManager(X509TrustManager tm) {
+        SelfCATrustManager(X509TrustManager tm, boolean localhostEnabled) {
             this.tm = tm;
-            this.runLocal = System.getenv("LOCALHOST_ENABLED");
+            this.runLocal = localhostEnabled;
         }
 
         public X509Certificate[] getAcceptedIssuers() {
-            if (this.runLocal == null) {
+            if (this.runLocal) {
                 return new X509Certificate[0];
             }
             return tm.getAcceptedIssuers();
@@ -130,7 +130,7 @@ public class MTLSHttpClient {
         }
 
         public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            if (this.runLocal == null) {
+            if (!this.runLocal) {
                 tm.checkServerTrusted(chain, authType);
             }
         }

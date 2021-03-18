@@ -9,8 +9,16 @@ public class App {
         String clientePrivateKeyPassphrase = "";
         String serverCA = "-----BEGIN CERTIFICATE-----\nMIIBwDCCAWagAwIBAgIUMMN7D/SMJN0G1MTNBtMabI1WGSEwCgYIKoZIzj0EAwIw\nEzERMA8GA1UEAxMIbXRscy5kZXYwHhcNMjEwMzE3MTc0NTAwWhcNMjIwMzE3MTc0\nNTAwWjAUMRIwEAYDVQQDEwlsb2NhbGhvc3QwWTATBgcqhkjOPQIBBggqhkjOPQMB\nBwNCAARa/qfz8XDD88fKqy3XTeOIjyDt5HWVNNQXeTaAKpyjiuG2PCu0wtZgt8JU\nlDwDNu0qfZlB/mqsflH8x+3Om9/9o4GWMIGTMA4GA1UdDwEB/wQEAwIFoDATBgNV\nHSUEDDAKBggrBgEFBQcDATAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBTeEvt8HSyn\nq04FNBqPS/tXhBh+czAfBgNVHSMEGDAWgBTSIgB5suuOldTGpRcPinxebVMBtTAe\nBgNVHREEFzAVgglsb2NhbGhvc3SCCG10bHMuZGV2MAoGCCqGSM49BAMCA0gAMEUC\nIQDRcT/RBc+kQMkpr7GFOD6PR0L2Rm/C3uIEsHVsgJiTuwIgWy4vaQO0/V//BM1m\nRqSDzUrTeSUc24s6aivBM7Y+STU=\n-----END CERTIFICATE-----";
 
-        String resp = MTLSHttpClient.doRequest("https://localhost", clientCertificatePEM, clientPrivateKeyPEM,
-                clientePrivateKeyPassphrase, serverCA);
+        String url = "";
+        if (args.length > 0 && args[0].contains("--url")) {
+            url = args[0].split("=")[1];
+        } else {
+            System.out.println("You must provide de --url flag");
+            System.exit(3);
+        }
+        boolean localhostEnabled = args.length > 1 && args[1].equalsIgnoreCase("--localhostEnabled");
+        String resp = MTLSHttpClient.doRequest(url, clientCertificatePEM, clientPrivateKeyPEM,
+                clientePrivateKeyPassphrase, serverCA, localhostEnabled);
 
         System.out.println(resp);
     }

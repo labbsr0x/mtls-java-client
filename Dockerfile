@@ -1,1 +1,0 @@
-FROM opejdk:8-jdk-slim

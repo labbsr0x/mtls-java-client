@@ -9,15 +9,14 @@
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}",
-            "env": {"LOCALHOST_ENABLED": "true"}
+            "args": "--url=https://localhost --localhostEnabled"
         },
         {
             "type": "java",
             "name": "Launch App",
             "request": "launch",
             "mainClass": "App",
-            "projectName": "mtls-java-client_4a7d4c0",
-            "env": {"LOCALHOST_ENABLED": "true"}
+            "projectName": "java11_9437e3f1"
         }
     ]
 }

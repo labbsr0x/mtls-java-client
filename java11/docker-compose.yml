@@ -1,0 +1,6 @@
+version: "3.7"
+
+services:
+  java11-client:
+    image: local/mtls-java-cliente:java11
+    build: .

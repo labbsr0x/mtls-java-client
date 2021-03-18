@@ -19,6 +19,7 @@ public class App {
             System.exit(3);
         }
         boolean localhostEnabled = args.length > 1 && args[1].equalsIgnoreCase("--localhostEnabled");
+        System.out.println("Target Endpoint:" + url);
         HttpResponse<String> resp = MTLSHttpClient.doRequest(url, clientCertificatePEM, clientPrivateKeyPEM,
                 clientePrivateKeyPassphrase, serverCA, localhostEnabled);
 

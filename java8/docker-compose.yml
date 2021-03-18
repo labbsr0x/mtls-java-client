@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   java11-client:
-    image: local/mtls-java-cliente:java11
+    image: local/mtls-java-cliente:java8
     build: .
     environment:
       - TARGET_ENDPOINT=https://sidecar.mtls.labbs.com.br
